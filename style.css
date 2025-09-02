@@ -1,0 +1,50 @@
+**File: style.css**
+
+
+```css
+:root{
+--bg:#f6f7fb; --fg:#0f172a; --muted:#6b7280; --brand:#2563eb; --brand-2:#1d4ed8; --card:#ffffff; --border:#e5e7eb; --accent:#eef2ff; --red:#ef4444; --green:#10b981;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; font: 16px/1.5 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; background:var(--bg); color:var(--fg)}
+.container{max-width:1000px; margin:32px auto; padding:0 16px}
+header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
+h1{font-size:clamp(20px, 4vw, 28px); margin:0}
+.sub{color:var(--muted); font-size:14px}
+.grid{display:grid; gap:12px}
+.cards{grid-template-columns: repeat(auto-fit, minmax(220px,1fr))}
+.card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow: 0 6px 18px rgba(15,23,42,.06)}
+.summary .value{font-size:24px; font-weight:700}
+.summary .label{color:var(--muted); font-size:12px}
+form#expense-form{display:grid; grid-template-columns: repeat(6, 1fr); gap:10px}
+form#expense-form .full{grid-column: 1/-1}
+input, select, button{height:44px; padding:0 12px; border-radius:12px; border:1px solid var(--border); background:#fff; color:inherit}
+input[type="number"]{text-align:right}
+button{cursor:pointer; font-weight:600}
+.btn{background:var(--brand); border-color:transparent; color:#fff}
+.btn:hover{background:var(--brand-2)}
+.btn-outline{background:transparent}
+.btn-danger{background:var(--red); color:#fff; border-color:transparent}
+.btn-muted{background:#f3f4f6}
+.filters{display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:12px}
+table{width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden}
+thead th{background:#f9fafb; text-align:left; font-size:13px; color:var(--muted); padding:12px}
+tbody td{padding:12px; border-top:1px solid var(--border)}
+tbody tr:hover{background:#fcfdff}
+td.amt{font-variant-numeric: tabular-nums; text-align:right; white-space:nowrap}
+.actions{width:140px; text-align:right}
+.actions button{height:36px; margin-left:6px}
+.chip{display:inline-flex; align-items:center; justify-content:center; padding:6px 10px; border-radius:999px; font-size:18px; background:#fff; border:1px solid var(--border); min-width:44px}
+.chip[title]{cursor:help}
+/* Make emoji render nicely and slightly larger */
+.chip{font-size:20px}
+@media (max-width:780px){
+form#expense-form{grid-template-columns:1fr 1fr}
+.filters{grid-template-columns:1fr 1fr}
+.actions{width:auto}
+}
+```
+
+
+---
