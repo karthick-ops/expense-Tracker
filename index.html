@@ -23,7 +23,7 @@
     .summary .value{font-size: 24px; font-weight:700}
     .summary .label{color:var(--muted); font-size:12px}
 
-    form#expense-form{display:grid; grid-template-columns: repeat(6, 1fr); gap:10px}
+    form#expense-form{display:grid; grid-template-columns: repeat(7, 1fr); gap:10px}
     form#expense-form .full{grid-column: 1/-1}
     input, select, button{height:44px; padding:0 12px; border-radius:12px; border:1px solid var(--border); background:#fff; color:inherit}
     input[type="number"]{text-align:right}
@@ -60,7 +60,7 @@
     <header>
       <div>
         <h1>My Expense</h1>
-        <div class="sub">Daiy Expense (Don't Spend unwanted).</div>
+        <div class="sub">Daily Expense (Don't Spend unwanted).</div>
       </div>
       <div class="toolbar">
         <button id="export-csv" class="btn-outline">Export CSV</button>
@@ -81,6 +81,18 @@
         <div class="label">Entries</div>
         <div class="value" id="entries-count">0</div>
       </div>
+      <div class="card summary">
+        <div class="label">Credit Cash</div>
+        <div class="value" id="credit-cash">₹0</div>
+      </div>
+      <div class="card summary">
+        <div class="label">Debit Cash</div>
+        <div class="value" id="debit-cash">₹0</div>
+      </div>
+      <div class="card summary">
+        <div class="label">Overall Balance</div>
+        <div class="value" id="balance">₹0</div>
+      </div>
     </section>
 
     <section class="card" style="margin-top:16px">
@@ -96,15 +108,18 @@
           <option>Health</option>
           <option>Ration</option>
           <option>Travel</option>
-          <option>Groceries</option>
           <option>Rent</option>
           <option>Utilities</option>
           <option>Other</option>
           <option>Trade</option>
-          <option>Recharge </option>
+          <option>Recharge</option>
           <option>Wifi Recharge</option>
           <option>Petrol</option>
           <option>Gold Loan</option>
+        </select>
+        <select id="type" name="type" aria-label="Type">
+          <option value="credit">Credit (+)</option>
+          <option value="debit">Debit (-)</option>
         </select>
         <input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="Amount" required />
         <button id="submit-btn" class="btn" type="submit">Add</button>
@@ -123,12 +138,11 @@
           <option>Health</option>
           <option>Ration</option>
           <option>Travel</option>
-          <option>Groceries</option>
           <option>Rent</option>
           <option>Utilities</option>
           <option>Other</option>
-           <option>Trade</option>
-          <option>Recharge </option>
+          <option>Trade</option>
+          <option>Recharge</option>
           <option>Wifi Recharge</option>
           <option>Petrol</option>
           <option>Gold Loan</option>
@@ -146,6 +160,7 @@
             <th>Date</th>
             <th>Description</th>
             <th>Category</th>
+            <th>Type</th>
             <th style="text-align:right">Amount</th>
             <th style="text-align:right">Actions</th>
           </tr>
@@ -158,7 +173,7 @@
   <script>
     (() => {
       const KEY = 'expense-tracker-v1';
-      let expenses = []; // {id, date, desc, category, amount}
+      let expenses = []; // {id, date, desc, category, type, amount}
       let editingId = null;
 
       const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
@@ -168,6 +183,7 @@
       const dateEl = document.getElementById('date');
       const descEl = document.getElementById('desc');
       const catEl = document.getElementById('category');
+      const typeEl = document.getElementById('type');
       const amtEl = document.getElementById('amount');
       const submitBtn = document.getElementById('submit-btn');
       const cancelEditBtn = document.getElementById('cancel-edit');
@@ -182,6 +198,9 @@
       const totalMonthEl = document.getElementById('total-month');
       const totalAllEl = document.getElementById('total-all');
       const entriesCountEl = document.getElementById('entries-count');
+      const creditCashEl = document.getElementById('credit-cash');
+      const debitCashEl = document.getElementById('debit-cash');
+      const balanceEl = document.getElementById('balance');
 
       const exportBtn = document.getElementById('export-csv');
       const clearAllBtn = document.getElementById('clear-all');
@@ -220,6 +239,7 @@
             <td>${e.date}</td>
             <td>${escapeHtml(e.desc)}</td>
             <td><span class="chip chip-${slug(e.category)}">${e.category}</span></td>
+            <td>${e.type || 'debit'}</td>
             <td class="amt">${inr.format(e.amount)}</td>
             <td class="actions">
               <button data-edit="${e.id}">Edit</button>
@@ -231,20 +251,31 @@
       }
 
       function renderSummary(){
-        const all = expenses.reduce((s,e) => s + Number(e.amount), 0);
+        let totalCredit = 0, totalDebit = 0;
         const now = new Date();
         const y = now.getFullYear(), m = now.getMonth();
+
+        for (const e of expenses){
+          if (e.type === 'credit') totalCredit += Number(e.amount);
+          else totalDebit += Number(e.amount);
+        }
+
+        const all = totalCredit + totalDebit;
         const monthTotal = expenses.reduce((s,e) => {
           const d = new Date(e.date);
           return s + (d.getFullYear()===y && d.getMonth()===m ? Number(e.amount) : 0);
         }, 0);
+
         totalAllEl.textContent = inr.format(all);
         totalMonthEl.textContent = inr.format(monthTotal);
         entriesCountEl.textContent = String(expenses.length);
+        creditCashEl.textContent = inr.format(totalCredit);
+        debitCashEl.textContent = inr.format(totalDebit);
+        balanceEl.textContent = inr.format(totalCredit - totalDebit);
       }
 
       function addExpense(data){
-        expenses.push({ id: genId(), date: data.date, desc: data.desc, category: data.category, amount: Number(data.amount) });
+        expenses.push({ id: genId(), date: data.date, desc: data.desc, category: data.category, type: data.type, amount: Number(data.amount) });
         save(); render();
       }
       function updateExpense(id, data){
@@ -266,6 +297,7 @@
         dateEl.value = e.date;
         descEl.value = e.desc;
         catEl.value = e.category;
+        typeEl.value = e.type || 'debit';
         amtEl.value = e.amount;
         submitBtn.textContent = 'Update';
         cancelEditBtn.hidden = false;
@@ -285,6 +317,7 @@
           date: dateEl.value || todayISO(),
           desc: descEl.value.trim(),
           category: catEl.value,
+          type: typeEl.value,
           amount: amtEl.value
         };
         if (!data.desc || !data.amount) return;
@@ -305,7 +338,7 @@
       clearFiltersBtn.addEventListener('click', () => { qEl.value=''; fcatEl.value=''; fromEl.value=''; toEl.value=''; render(); });
 
       exportBtn.addEventListener('click', () => {
-        const rows = [['Date','Description','Category','Amount'], ...expenses.map(e => [e.date, e.desc, e.category, e.amount])];
+        const rows = [['Date','Description','Category','Type','Amount'], ...expenses.map(e => [e.date, e.desc, e.category, e.type, e.amount])];
         const csv = rows.map(r => r.map(x => '"' + String(x).replace(/"/g,'""') + '"').join(',')).join('\n');
         const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
         const a = document.createElement('a');
