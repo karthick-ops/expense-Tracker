@@ -6,7 +6,7 @@
   <title>Expense Tracker</title>
   <style>
     :root{
-      --bg:#f6f7fb; --fg:#0f172a; --muted:#6b7280; --brand:#2563eb; --brand-2:#1d4ed8; --card:#ffffff; --border:#e5e7eb; --accent:#eef2ff; --red:#ef4444; --green:#10b981;
+      --bg:oklch(57.547% 0.18491 261.492); --fg:#010e03; --muted:#6b7280; --brand:#158b15; --brand-2:#28e231; --card:#ffffff; --border:#e5e7eb; --accent:#eef2ff; --red:#ff0d0d; --green:#10b981;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -59,8 +59,8 @@
   <div class="container">
     <header>
       <div>
-        <h1>Expense Tracker</h1>
-        <div class="sub">Track daily expenses with localStorage (works offline).</div>
+        <h1>My Expense</h1>
+        <div class="sub">Daiy Expense (Don't Spend unwanted).</div>
       </div>
       <div class="toolbar">
         <button id="export-csv" class="btn-outline">Export CSV</button>
@@ -100,6 +100,11 @@
           <option>Rent</option>
           <option>Utilities</option>
           <option>Other</option>
+          <option>Trade</option>
+          <option>Recharge </option>
+          <option>Wifi Recharge</option>
+          <option>Petrol</option>
+          <option>Gold Loan</option>
         </select>
         <input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="Amount" required />
         <button id="submit-btn" class="btn" type="submit">Add</button>
@@ -122,6 +127,11 @@
           <option>Rent</option>
           <option>Utilities</option>
           <option>Other</option>
+           <option>Trade</option>
+          <option>Recharge </option>
+          <option>Wifi Recharge</option>
+          <option>Petrol</option>
+          <option>Gold Loan</option>
         </select>
         <input id="from" type="date" aria-label="From date" />
         <input id="to" type="date" aria-label="To date" />
