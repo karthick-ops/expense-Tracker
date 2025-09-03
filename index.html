@@ -6,145 +6,359 @@
   <title>Expense Tracker</title>
   <style>
     :root{
-      --bg:#f4f7f8; --fg:#010e03; --muted:#6b7280; --brand:#158b15; --brand-2:#28e231; --card:#ffffff; --border:#ccc; --accent:#e48676; --red:#ff0d0d; --green:#10b981;
+      --bg:oklch(71.303% 0.1945 47.872); --fg:#010e03; --muted:#6b7280; --brand:#158b15; --brand-2:#28e231; --card:#ddb3b3; --border:#6009ec; --accent:#e48676; --red:#ff0d0d; --green:#10b981;
     }
     *{box-sizing:border-box}
-    body{margin:0; font:16px system-ui; background:var(--bg); color:var(--fg)}
-    .container{max-width:1000px; margin:32px auto; padding:0 16px}
-    header{display:flex; justify-content:space-between; align-items:center}
-    h1{margin:0}
-    .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-top:16px}
-    .summary{display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:12px}
-    .summary div{padding:12px; border-radius:8px; background:#f9fafb; text-align:center}
-    .summary .value{font-size:20px; font-weight:700}
-    form{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:12px}
-    input,select,button{padding:8px; border:1px solid var(--border); border-radius:8px}
+    html,body{height:100%}
+    body{margin:0; font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:var(--fg)}
+    .container{max-width: 1000px; margin: 32px auto; padding: 0 16px}
+    header{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px}
+    h1{font-size: clamp(20px, 4vw, 28px); margin:0}
+    .sub{color:var(--muted); font-size:14px}
+
+    .grid{display:grid; gap:12px}
+    .cards{grid-template-columns: repeat(auto-fit, minmax(220px,1fr))}
+    .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:16px; box-shadow: 0 6px 18px rgba(15,23,42,.06)}
+
+    .summary .value{font-size: 24px; font-weight:700}
+    .summary .label{color:var(--muted); font-size:12px}
+
+    form#expense-form{display:grid; grid-template-columns: repeat(7, 1fr); gap:10px}
+    form#expense-form .full{grid-column: 1/-1}
+    input, select, button{height:44px; padding:0 12px; border-radius:12px; border:1px solid var(--border); background:#fff; color:inherit}
+    input[type="number"]{text-align:right}
     button{cursor:pointer; font-weight:600}
-    .btn{background:var(--brand); color:#fff; border:none}
+    .btn{background:var(--brand); border-color:transparent; color:#fff}
     .btn:hover{background:var(--brand-2)}
-    table{width:100%; border-collapse:collapse; margin-top:16px}
-    th,td{padding:8px; border-bottom:1px solid var(--border)}
-    td.amt{text-align:right}
+    .btn-outline{background:transparent}
+    .btn-danger{background:var(--red); color:#fff; border-color:transparent}
+    .btn-muted{background:#f3f4f6}
+
+    .filters{display:grid; grid-template-columns: repeat(5, 1fr); gap:10px; margin-top:12px}
+
+    table{width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden}
+    thead th{background:#f9fafb; text-align:left; font-size:13px; color:var(--muted); padding:12px}
+    tbody td{padding:12px; border-top:1px solid var(--border)}
+    tbody tr:hover{background:#fcfdff}
+    td.amt{font-variant-numeric: tabular-nums; text-align:right; white-space:nowrap}
+    td.actions{width:140px; text-align:right}
+    td.actions button{height:36px; margin-left:6px}
+
+    .chip{display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; background:#eef2ff; color:#3730a3}
+
+    .toolbar{display:flex; gap:8px; flex-wrap:wrap}
+
+    @media (max-width: 780px){
+      form#expense-form{grid-template-columns: 1fr 1fr}
+      .filters{grid-template-columns: 1fr 1fr}
+      td.actions{width:auto}
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>💰 Expense Tracker</h1>
-      <button id="clear-all" class="btn">Clear All</button>
+      <div>
+        <h1>My Expense</h1>
+        <div class="sub">Daily Expense (Don't Spend unwanted).</div>
+      </div>
+      <div class="toolbar">
+        <button id="export-csv" class="btn-outline">Export CSV</button>
+        <button id="clear-all" class="btn-danger">Clear All</button>
+      </div>
     </header>
 
-    <!-- Manual balance input -->
-    <div class="card">
-      <label for="initial-balance"><strong>Enter Starting Balance:</strong></label>
-      <input type="number" id="initial-balance" placeholder="e.g., 5000" />
-      <button id="save-balance" class="btn">Save Balance</button>
-    </div>
-
-    <!-- Summary -->
-    <div class="card summary">
-      <div>
+    <section class="grid cards">
+      <div class="card summary">
+        <div class="label">Total this month</div>
+        <div class="value" id="total-month">₹0</div>
+      </div>
+      <div class="card summary">
+        <div class="label">Total all time</div>
+        <div class="value" id="total-all">₹0</div>
+      </div>
+      <div class="card summary">
+        <div class="label">Entries</div>
+        <div class="value" id="entries-count">0</div>
+      </div>
+      <div class="card summary">
         <div class="label">Credit Cash</div>
         <div class="value" id="credit-cash">₹0</div>
       </div>
-      <div>
+      <div class="card summary">
         <div class="label">Debit Cash</div>
         <div class="value" id="debit-cash">₹0</div>
       </div>
-      <div>
-        <div class="label">Overall Amount in Hand</div>
-        <div class="value" id="overall">₹0</div>
+      <div class="card summary">
+        <div class="label">Overall Balance</div>
+        <div class="value" id="balance">₹0</div>
       </div>
-    </div>
+    </section>
 
-    <!-- Add transaction -->
-    <div class="card">
-      <form id="expense-form">
-        <input id="desc" type="text" placeholder="Description" required />
-        <select id="type">
-          <option value="credit">Credit ➕</option>
-          <option value="debit">Debit ➖</option>
+    <section class="card" style="margin-top:16px">
+      <form id="expense-form" autocomplete="on">
+        <input id="date" name="date" type="date" aria-label="Date" required />
+        <input id="desc" name="desc" type="text" placeholder="Description (e.g., Lunch, Uber, Rent)" minlength="2" required />
+        <select id="category" name="category" aria-label="Category">
+          <option>Food</option>
+          <option>Transport</option>
+          <option>Bills</option>
+          <option>Groceries</option>
+          <option>Entertainment</option>
+          <option>Health</option>
+          <option>Ration</option>
+          <option>Travel</option>
+          <option>Rent</option>
+          <option>Utilities</option>
+          <option>Other</option>
+          <option>Trade</option>
+          <option>Recharge</option>
+          <option>Wifi Recharge</option>
+          <option>Petrol</option>
+          <option>Gold Loan</option>
         </select>
-        <input id="amount" type="number" step="0.01" min="1" placeholder="Amount" required />
-        <input id="date" type="date" required />
-        <button type="submit" class="btn">Add</button>
+        <select id="type" name="type" aria-label="Type">
+          <option value="credit">Credit (+)</option>
+          <option value="debit">Debit (-)</option>
+        </select>
+        <input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="Amount" required />
+        <button id="submit-btn" class="btn" type="submit">Add</button>
+        <button id="cancel-edit" class="btn-muted" type="button" hidden>Cancel</button>
       </form>
-    </div>
 
-    <!-- Table -->
-    <div class="card">
-      <table>
+      <div class="filters">
+        <input id="q" type="search" placeholder="Search description…" />
+        <select id="filter-category" aria-label="Filter by category">
+          <option value="">All categories</option>
+          <option>Food</option>
+          <option>Transport</option>
+          <option>Bills</option>
+          <option>Groceries</option>
+          <option>Entertainment</option>
+          <option>Health</option>
+          <option>Ration</option>
+          <option>Travel</option>
+          <option>Rent</option>
+          <option>Utilities</option>
+          <option>Other</option>
+          <option>Trade</option>
+          <option>Recharge</option>
+          <option>Wifi Recharge</option>
+          <option>Petrol</option>
+          <option>Gold Loan</option>
+        </select>
+        <input id="from" type="date" aria-label="From date" />
+        <input id="to" type="date" aria-label="To date" />
+        <button id="clear-filters" type="button" class="btn-outline">Clear filters</button>
+      </div>
+    </section>
+
+    <section style="margin-top:16px">
+      <table role="grid" aria-label="Expenses table">
         <thead>
           <tr>
-            <th>Date</th><th>Description</th><th>Type</th><th class="amt">Amount</th>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Category</th>
+            <th>Type</th>
+            <th style="text-align:right">Amount</th>
+            <th style="text-align:right">Actions</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
-    </div>
+    </section>
   </div>
 
   <script>
-    const KEY_TXN = "expense-txns-v1";
-    const KEY_BAL = "expense-balance-v1";
-    let transactions = JSON.parse(localStorage.getItem(KEY_TXN)) || [];
-    let initialBalance = Number(localStorage.getItem(KEY_BAL)) || 0;
+    (() => {
+      const KEY = 'expense-tracker-v1';
+      let expenses = []; // {id, date, desc, category, type, amount}
+      let editingId = null;
 
-    const tbody = document.getElementById("tbody");
-    const creditEl = document.getElementById("credit-cash");
-    const debitEl = document.getElementById("debit-cash");
-    const overallEl = document.getElementById("overall");
-    const balInput = document.getElementById("initial-balance");
+      const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
 
-    // Show saved balance
-    balInput.value = initialBalance || "";
+      // DOM refs
+      const form = document.getElementById('expense-form');
+      const dateEl = document.getElementById('date');
+      const descEl = document.getElementById('desc');
+      const catEl = document.getElementById('category');
+      const typeEl = document.getElementById('type');
+      const amtEl = document.getElementById('amount');
+      const submitBtn = document.getElementById('submit-btn');
+      const cancelEditBtn = document.getElementById('cancel-edit');
 
-    function render() {
-      tbody.innerHTML = "";
-      let credit = 0, debit = 0;
-      transactions.forEach(t => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${t.date}</td><td>${t.desc}</td><td>${t.type}</td><td class="amt">₹${t.amount}</td>`;
-        tbody.appendChild(tr);
-        if (t.type === "credit") credit += t.amount;
-        else debit += t.amount;
+      const tbody = document.getElementById('tbody');
+      const qEl = document.getElementById('q');
+      const fcatEl = document.getElementById('filter-category');
+      const fromEl = document.getElementById('from');
+      const toEl = document.getElementById('to');
+      const clearFiltersBtn = document.getElementById('clear-filters');
+
+      const totalMonthEl = document.getElementById('total-month');
+      const totalAllEl = document.getElementById('total-all');
+      const entriesCountEl = document.getElementById('entries-count');
+      const creditCashEl = document.getElementById('credit-cash');
+      const debitCashEl = document.getElementById('debit-cash');
+      const balanceEl = document.getElementById('balance');
+
+      const exportBtn = document.getElementById('export-csv');
+      const clearAllBtn = document.getElementById('clear-all');
+
+      function todayISO(){ return new Date().toISOString().slice(0,10); }
+      function genId(){ return 'e' + Math.random().toString(36).slice(2,9) + Date.now().toString(36); }
+
+      function load(){
+        try{ expenses = JSON.parse(localStorage.getItem(KEY) || '[]'); }
+        catch{ expenses = []; }
+      }
+      function save(){ localStorage.setItem(KEY, JSON.stringify(expenses)); }
+
+      function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
+      function slug(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-'); }
+
+      function render(){
+        const q = qEl.value.trim().toLowerCase();
+        const fcat = fcatEl.value;
+        const from = fromEl.value ? new Date(fromEl.value) : null;
+        const to = toEl.value ? new Date(toEl.value) : null;
+
+        const filtered = expenses.filter(e => {
+          const matchText = !q || e.desc.toLowerCase().includes(q);
+          const matchCat = !fcat || e.category === fcat;
+          const d = new Date(e.date);
+          const afterFrom = !from || d >= from;
+          const beforeTo = !to || d <= to;
+          return matchText && matchCat && afterFrom && beforeTo;
+        }).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        tbody.innerHTML = '';
+        for (const e of filtered){
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${e.date}</td>
+            <td>${escapeHtml(e.desc)}</td>
+            <td><span class="chip chip-${slug(e.category)}">${e.category}</span></td>
+            <td>${e.type || 'debit'}</td>
+            <td class="amt">${inr.format(e.amount)}</td>
+            <td class="actions">
+              <button data-edit="${e.id}">Edit</button>
+              <button data-del="${e.id}">Delete</button>
+            </td>`;
+          tbody.appendChild(tr);
+        }
+        renderSummary();
+      }
+
+      function renderSummary(){
+        let totalCredit = 0, totalDebit = 0;
+        const now = new Date();
+        const y = now.getFullYear(), m = now.getMonth();
+
+        for (const e of expenses){
+          if (e.type === 'credit') totalCredit += Number(e.amount);
+          else totalDebit += Number(e.amount);
+        }
+
+        const all = totalCredit + totalDebit;
+        const monthTotal = expenses.reduce((s,e) => {
+          const d = new Date(e.date);
+          return s + (d.getFullYear()===y && d.getMonth()===m ? Number(e.amount) : 0);
+        }, 0);
+
+        totalAllEl.textContent = inr.format(all);
+        totalMonthEl.textContent = inr.format(monthTotal);
+        entriesCountEl.textContent = String(expenses.length);
+        creditCashEl.textContent = inr.format(totalCredit);
+        debitCashEl.textContent = inr.format(totalDebit);
+        balanceEl.textContent = inr.format(totalCredit - totalDebit);
+      }
+
+      function addExpense(data){
+        expenses.push({ id: genId(), date: data.date, desc: data.desc, category: data.category, type: data.type, amount: Number(data.amount) });
+        save(); render();
+      }
+      function updateExpense(id, data){
+        const idx = expenses.findIndex(e => e.id === id);
+        if (idx === -1) return;
+        expenses[idx] = { ...expenses[idx], ...data, amount: Number(data.amount) };
+        save(); render(); cancelEdit();
+      }
+      function deleteExpense(id){
+        if (!confirm('Delete this expense?')) return;
+        expenses = expenses.filter(e => e.id !== id);
+        save(); render();
+      }
+
+      function startEdit(id){
+        const e = expenses.find(x => x.id === id);
+        if (!e) return;
+        editingId = id;
+        dateEl.value = e.date;
+        descEl.value = e.desc;
+        catEl.value = e.category;
+        typeEl.value = e.type || 'debit';
+        amtEl.value = e.amount;
+        submitBtn.textContent = 'Update';
+        cancelEditBtn.hidden = false;
+        descEl.focus();
+      }
+      function cancelEdit(){
+        editingId = null;
+        form.reset();
+        dateEl.value = todayISO();
+        submitBtn.textContent = 'Add';
+        cancelEditBtn.hidden = true;
+      }
+
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const data = {
+          date: dateEl.value || todayISO(),
+          desc: descEl.value.trim(),
+          category: catEl.value,
+          type: typeEl.value,
+          amount: amtEl.value
+        };
+        if (!data.desc || !data.amount) return;
+        if (editingId) updateExpense(editingId, data); else addExpense(data);
+        form.reset(); dateEl.value = todayISO(); descEl.focus();
       });
-      const overall = initialBalance + credit - debit;
-      creditEl.textContent = `₹${credit}`;
-      debitEl.textContent = `₹${debit}`;
-      overallEl.textContent = `₹${overall}`;
-    }
+      cancelEditBtn.addEventListener('click', cancelEdit);
 
-    // Add txn
-    document.getElementById("expense-form").addEventListener("submit", e => {
-      e.preventDefault();
-      const desc = document.getElementById("desc").value;
-      const type = document.getElementById("type").value;
-      const amount = Number(document.getElementById("amount").value);
-      const date = document.getElementById("date").value;
-      if (!desc || !amount || !date) return;
-      transactions.push({desc,type,amount,date});
-      localStorage.setItem(KEY_TXN, JSON.stringify(transactions));
+      tbody.addEventListener('click', (ev) => {
+        const t = ev.target;
+        const delId = t.getAttribute('data-del');
+        const editId = t.getAttribute('data-edit');
+        if (delId) deleteExpense(delId);
+        if (editId) startEdit(editId);
+      });
+
+      [qEl, fcatEl, fromEl, toEl].forEach(el => el.addEventListener('input', render));
+      clearFiltersBtn.addEventListener('click', () => { qEl.value=''; fcatEl.value=''; fromEl.value=''; toEl.value=''; render(); });
+
+      exportBtn.addEventListener('click', () => {
+        const rows = [['Date','Description','Category','Type','Amount'], ...expenses.map(e => [e.date, e.desc, e.category, e.type, e.amount])];
+        const csv = rows.map(r => r.map(x => '"' + String(x).replace(/"/g,'""') + '"').join(',')).join('\n');
+        const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'expenses.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      clearAllBtn.addEventListener('click', () => {
+        if (!confirm('This will delete ALL expenses. Continue?')) return;
+        expenses = []; save(); render(); cancelEdit();
+      });
+
+      // init
+      load();
+      if (!Array.isArray(expenses)) expenses = [];
+      dateEl.value = todayISO();
       render();
-      e.target.reset();
-    });
-
-    // Save initial balance
-    document.getElementById("save-balance").addEventListener("click", () => {
-      initialBalance = Number(balInput.value) || 0;
-      localStorage.setItem(KEY_BAL, initialBalance);
-      render();
-    });
-
-    // Clear all
-    document.getElementById("clear-all").addEventListener("click", () => {
-      if (!confirm("Delete all data?")) return;
-      transactions = [];
-      localStorage.removeItem(KEY_TXN);
-      render();
-    });
-
-    render();
+    })();
   </script>
 </body>
 </html>
