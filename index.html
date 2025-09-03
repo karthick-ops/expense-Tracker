@@ -93,25 +93,13 @@
         <div class="label">Overall Balance</div>
         <div class="value" id="balance">₹0</div>
       </div>
+      <!-- ✅ New In Hand Cash card -->
+      <div class="card summary">
+        <div class="label">In Hand Cash (Manual)</div>
+        <input id="inhand-input" type="number" placeholder="Enter amount" 
+               style="width:100%; margin-top:8px; padding:6px; border-radius:8px; border:1px solid #ccc;" />
+      </div>
     </section>
-    <section class="grid cards" style="margin-top:16px">
-  <div class="card summary">
-    <div class="label">Manual Credit</div>
-    <input id="manual-credit" type="number" placeholder="Enter credit" />
-  </div>
-  <div class="card summary">
-    <div class="label">Manual Debit</div>
-    <input id="manual-debit" type="number" placeholder="Enter debit" />
-  </div>
-  <div class="card summary">
-    <div class="label">Overall Amount</div>
-    <input id="manual-overall" type="number" placeholder="Enter overall amount" />
-  </div>
-  <div class="card summary">
-    <div class="label">In Hand</div>
-    <div class="value" id="manual-inhand">₹0</div>
-  </div>
-</section>
 
     <section class="card" style="margin-top:16px">
       <form id="expense-form" autocomplete="on">
@@ -191,7 +179,7 @@
   <script>
     (() => {
       const KEY = 'expense-tracker-v1';
-      let expenses = []; // {id, date, desc, category, type, amount}
+      let expenses = []; 
       let editingId = null;
 
       const inr = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
@@ -205,21 +193,19 @@
       const amtEl = document.getElementById('amount');
       const submitBtn = document.getElementById('submit-btn');
       const cancelEditBtn = document.getElementById('cancel-edit');
-
       const tbody = document.getElementById('tbody');
       const qEl = document.getElementById('q');
       const fcatEl = document.getElementById('filter-category');
       const fromEl = document.getElementById('from');
       const toEl = document.getElementById('to');
       const clearFiltersBtn = document.getElementById('clear-filters');
-
       const totalMonthEl = document.getElementById('total-month');
       const totalAllEl = document.getElementById('total-all');
       const entriesCountEl = document.getElementById('entries-count');
       const creditCashEl = document.getElementById('credit-cash');
       const debitCashEl = document.getElementById('debit-cash');
       const balanceEl = document.getElementById('balance');
-
+      const inhandInput = document.getElementById('inhand-input');
       const exportBtn = document.getElementById('export-csv');
       const clearAllBtn = document.getElementById('clear-all');
 
@@ -284,12 +270,14 @@
           return s + (d.getFullYear()===y && d.getMonth()===m ? Number(e.amount) : 0);
         }, 0);
 
+        const inhandVal = Number(inhandInput.value || 0);
+
         totalAllEl.textContent = inr.format(all);
         totalMonthEl.textContent = inr.format(monthTotal);
         entriesCountEl.textContent = String(expenses.length);
         creditCashEl.textContent = inr.format(totalCredit);
         debitCashEl.textContent = inr.format(totalDebit);
-        balanceEl.textContent = inr.format(totalCredit - totalDebit);
+        balanceEl.textContent = inr.format((totalCredit - totalDebit) + inhandVal);
       }
 
       function addExpense(data){
@@ -370,6 +358,8 @@
         if (!confirm('This will delete ALL expenses. Continue?')) return;
         expenses = []; save(); render(); cancelEdit();
       });
+
+      inhandInput.addEventListener('input', renderSummary);
 
       // init
       load();
