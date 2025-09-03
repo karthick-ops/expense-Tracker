@@ -264,7 +264,7 @@
           else totalDebit += Number(e.amount);
         }
 
-        const all = totalCredit + totalDebit;
+        const all = totalCredit + inhandVal;
         const monthTotal = expenses.reduce((s,e) => {
           const d = new Date(e.date);
           return s + (d.getFullYear()===y && d.getMonth()===m ? Number(e.amount) : 0);
